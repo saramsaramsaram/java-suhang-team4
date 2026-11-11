@@ -40,9 +40,6 @@ public class Sub extends BaseTimeEntity {
     @Column(nullable = false)
     private String serviceName;
 
-    @Column(length = 2048)
-    private String logoUrl;
-
     @Column(nullable = false, precision = 12, scale = 2)
     private BigDecimal monthlyPrice;
 
