@@ -6,4 +6,6 @@ import java.util.List;
 public interface SubService {
 
     List<SubResponseDto> getSubs();
+
+    SubResponseDto getSub(Long id);
 }
