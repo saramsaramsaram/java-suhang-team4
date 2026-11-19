@@ -60,6 +60,12 @@ public class SubServiceImpl implements SubService {
         return SubResponseDto.from(sub);
     }
 
+    @Override
+    @Transactional
+    public void deleteSub(Long id) {
+        subRepository.delete(findSub(id));
+    }
+
     private Sub findSub(Long id) {
         return subRepository.findById(id).orElseThrow(SubNotFoundException::new);
     }
