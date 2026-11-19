@@ -1,6 +1,7 @@
 package com.dgsw.javasuhangteam4.controller.subscribe;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -9,7 +10,10 @@ import org.springframework.web.bind.annotation.RestController;
 @RequiredArgsConstructor
 public class SubscribeController {
 
+    @PostMapping
+    public void createSub(  ) {
 
+    }
 
 
 }
