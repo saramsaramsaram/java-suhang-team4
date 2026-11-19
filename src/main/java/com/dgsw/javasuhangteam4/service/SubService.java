@@ -14,4 +14,6 @@ public interface SubService {
     SubResponseDto getSub(Long id);
 
     SubResponseDto updateSub(Long id, SubUpdateRequest request);
+
+    void deleteSub(Long id);
 }

@@ -38,4 +38,10 @@ public class SubscribeController {
             @PathVariable Long id, @Valid @RequestBody SubUpdateRequest request) {
         return subService.updateSub(id, request);
     }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deleteSub(@PathVariable Long id) {
+        subService.deleteSub(id);
+        return ResponseEntity.noContent().build();
+    }
 }
