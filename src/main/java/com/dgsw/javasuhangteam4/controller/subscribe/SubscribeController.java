@@ -1,17 +1,21 @@
 package com.dgsw.javasuhangteam4.controller.subscribe;
 
+import com.dgsw.javasuhangteam4.dto.request.SubUpdateRequest;
 import com.dgsw.javasuhangteam4.dto.response.SubResponseDto;
 import com.dgsw.javasuhangteam4.service.SubService;
+import jakarta.validation.Valid;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-@RequestMapping("/subscriptions")
+@RequestMapping({"/api/subs", "/subscriptions"})
 @RequiredArgsConstructor
 public class SubscribeController {
 
@@ -25,5 +29,11 @@ public class SubscribeController {
     @GetMapping("/{id}")
     public ResponseEntity<SubResponseDto> getSub(@PathVariable Long id) {
         return ResponseEntity.ok(subService.getSub(id));
+    }
+
+    @PutMapping("/{id}")
+    public SubResponseDto updateSub(
+            @PathVariable Long id, @Valid @RequestBody SubUpdateRequest request) {
+        return subService.updateSub(id, request);
     }
 }

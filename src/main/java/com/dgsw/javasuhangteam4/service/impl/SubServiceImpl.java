@@ -1,6 +1,8 @@
 package com.dgsw.javasuhangteam4.service.impl;
 
+import com.dgsw.javasuhangteam4.dto.request.SubUpdateRequest;
 import com.dgsw.javasuhangteam4.dto.response.SubResponseDto;
+import com.dgsw.javasuhangteam4.enitity.Sub;
 import com.dgsw.javasuhangteam4.exception.SubNotFoundException;
 import com.dgsw.javasuhangteam4.repository.SubRepository;
 import com.dgsw.javasuhangteam4.service.SubService;
@@ -25,8 +27,20 @@ public class SubServiceImpl implements SubService {
 
     @Override
     public SubResponseDto getSub(Long id) {
-        return subRepository.findById(id)
-                .map(SubResponseDto::from)
-                .orElseThrow(() -> new SubNotFoundException(id));
+        return SubResponseDto.from(findSub(id));
+    }
+
+    @Override
+    @Transactional
+    public SubResponseDto updateSub(Long id, SubUpdateRequest request) {
+        Sub sub = findSub(id);
+        sub.setServiceName(request.serviceName().strip());
+        sub.setMonthlyPrice(request.monthlyPrice());
+        sub.setBillingDay(request.billingDay());
+        return SubResponseDto.from(sub);
+    }
+
+    private Sub findSub(Long id) {
+        return subRepository.findById(id).orElseThrow(SubNotFoundException::new);
     }
 }
