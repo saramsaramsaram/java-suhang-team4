@@ -82,7 +82,7 @@ class SubscribeUpdateTest {
 
     @Test
     void returnsNotFoundForUnknownSubscriptionOnExistingRoute() throws Exception {
-        mvc.perform(put("/subscriptions/99999").contentType(MediaType.APPLICATION_JSON).content(VALID_UPDATE))
+        mvc.perform(put("/api/subs/99999").contentType(MediaType.APPLICATION_JSON).content(VALID_UPDATE))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.status").value(404));
     }
