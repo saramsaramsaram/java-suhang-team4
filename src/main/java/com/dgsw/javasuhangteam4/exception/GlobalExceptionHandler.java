@@ -11,8 +11,8 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
-    @ExceptionHandler(SubNotFoundException.class)
-    public ResponseEntity<ErrorResponse> handleSubNotFound(SubNotFoundException e) {
+    @ExceptionHandler({SubNotFoundException.class, MemberNotFoundException.class})
+    public ResponseEntity<ErrorResponse> handleNotFound(RuntimeException e) {
         return error(HttpStatus.NOT_FOUND, e.getMessage());
     }
 
