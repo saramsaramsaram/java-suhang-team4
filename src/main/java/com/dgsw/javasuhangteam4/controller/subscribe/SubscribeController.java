@@ -5,9 +5,12 @@ import com.dgsw.javasuhangteam4.dto.request.SubUpdateRequest;
 import com.dgsw.javasuhangteam4.dto.response.SubResponseDto;
 import com.dgsw.javasuhangteam4.service.SubService;
 import jakarta.validation.Valid;
+import java.time.YearMonth;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -15,6 +18,9 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping({"/api/subs", "/subscriptions"})
 @RequiredArgsConstructor
 public class SubscribeController {
+
+    private static final MediaType XLSX =
+            MediaType.parseMediaType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
 
     private final SubService subService;
 
@@ -43,5 +49,13 @@ public class SubscribeController {
     public ResponseEntity<Void> deleteSub(@PathVariable Long id) {
         subService.deleteSub(id);
         return ResponseEntity.noContent().build();
+    }
+
+    @GetMapping("/export")
+    public ResponseEntity<byte[]> exportExcel(@RequestParam YearMonth month) {
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=subs-" + month + ".xlsx")
+                .contentType(XLSX)
+                .body(subService.exportExcel(month));
     }
 }
