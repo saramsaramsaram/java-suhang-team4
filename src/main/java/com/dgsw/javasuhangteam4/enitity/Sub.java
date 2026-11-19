@@ -33,6 +33,10 @@ public class Sub extends BaseTimeEntity {
     @JoinColumn(name = "member_id", nullable = false)
     private Member member;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "category_id")
+    private Category category;
+
     @Column(nullable = false)
     private String serviceName;
 
@@ -45,6 +49,7 @@ public class Sub extends BaseTimeEntity {
     @Column(nullable = false)
     private LocalDate startDate;
 
+    @Builder.Default
     @Column(nullable = false)
     private boolean active = true;
 }
