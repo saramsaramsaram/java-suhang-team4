@@ -10,6 +10,7 @@ import com.dgsw.javasuhangteam4.dto.response.MonthlyBillingDto;
 import com.dgsw.javasuhangteam4.dto.response.MonthlySummaryResponseDto;
 import com.dgsw.javasuhangteam4.enitity.Sub;
 import com.dgsw.javasuhangteam4.exception.SubNotFoundException;
+import com.dgsw.javasuhangteam4.repository.MemberRepository;
 import com.dgsw.javasuhangteam4.repository.SubRepository;
 import java.math.BigDecimal;
 import java.time.Clock;
@@ -33,7 +34,7 @@ class SubServiceImplTest {
         subRepository = mock(SubRepository.class);
         // 오늘을 2026-11-19로 고정
         Clock clock = Clock.fixed(LocalDate.of(2026, 11, 19).atStartOfDay(ZONE).toInstant(), ZONE);
-        subService = new SubServiceImpl(subRepository, clock);
+        subService = new SubServiceImpl(subRepository, mock(MemberRepository.class), clock);
     }
 
     @Test
