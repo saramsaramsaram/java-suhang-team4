@@ -1,16 +1,24 @@
 package com.dgsw.javasuhangteam4.controller.subscribe;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.dgsw.javasuhangteam4.enitity.Member;
 import com.dgsw.javasuhangteam4.enitity.Sub;
+import com.jayway.jsonpath.JsonPath;
 import jakarta.persistence.EntityManager;
+import java.io.ByteArrayInputStream;
 import java.math.BigDecimal;
 import java.time.Clock;
 import java.time.LocalDate;
 import java.time.ZoneId;
+import java.util.ArrayList;
+import java.util.List;
+import org.apache.poi.ss.usermodel.Row;
+import org.apache.poi.ss.usermodel.Sheet;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -88,5 +96,45 @@ class SubscribeReadTest {
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.status").value(400))
                 .andExpect(jsonPath("$.message").value("입력값 오류"));
+    }
+
+    @Test
+    void excelMatchesMonthlySummary() throws Exception {
+        transactionTemplate.executeWithoutResult(transaction -> {
+            Member member = Member.builder().name("엑셀 회원").email("excel@example.com").build();
+            entityManager.persist(member);
+            // 11/5 결제일보다 늦게 시작 → 11월에는 결제되지 않음
+            entityManager.persist(Sub.builder().member(member).serviceName("늦게 시작한 구독")
+                    .monthlyPrice(new BigDecimal("5000")).billingDay(5)
+                    .startDate(LocalDate.of(2026, 11, 15)).build());
+            entityManager.persist(Sub.builder().member(member).serviceName("스포티파이")
+                    .monthlyPrice(new BigDecimal("10900")).billingDay(20)
+                    .startDate(LocalDate.of(2026, 9, 20)).build());
+        });
+
+        String summary = mvc.perform(get("/subscriptions/summary").param("month", "2026-11"))
+                .andExpect(status().isOk())
+                .andReturn().getResponse().getContentAsString();
+        List<String> summaryNames = JsonPath.read(summary, "$.subs[*].serviceName");
+        double summaryTotal = ((Number) JsonPath.read(summary, "$.totalAmount")).doubleValue();
+
+        byte[] file = mvc.perform(get("/api/subs/export").param("month", "2026-11"))
+                .andExpect(status().isOk())
+                .andReturn().getResponse().getContentAsByteArray();
+
+        try (var workbook = new XSSFWorkbook(new ByteArrayInputStream(file))) {
+            Sheet sheet = workbook.getSheetAt(0);
+            List<String> excelNames = new ArrayList<>();
+            for (int i = 1; i < sheet.getLastRowNum(); i++) {
+                excelNames.add(sheet.getRow(i).getCell(0).getStringCellValue());
+            }
+            Row sum = sheet.getRow(sheet.getLastRowNum());
+
+            assertThat(excelNames).containsExactlyElementsOf(summaryNames)
+                    .contains("스포티파이")
+                    .doesNotContain("늦게 시작한 구독");
+            assertThat(sum.getCell(0).getStringCellValue()).isEqualTo("합계");
+            assertThat(sum.getCell(2).getNumericCellValue()).isEqualTo(summaryTotal);
+        }
     }
 }

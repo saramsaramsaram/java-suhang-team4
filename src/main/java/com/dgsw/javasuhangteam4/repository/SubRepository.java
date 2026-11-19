@@ -24,5 +24,4 @@ public interface SubRepository extends JpaRepository<Sub, Long> {
             """)
     List<Sub> findActiveSubsStartedBy(LocalDate monthEnd);
 
-    List<Sub> findByActiveTrueAndStartDateLessThanEqualOrderByBillingDay(LocalDate date);
 }

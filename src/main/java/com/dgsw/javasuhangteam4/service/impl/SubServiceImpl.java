@@ -119,10 +119,10 @@ public class SubServiceImpl implements SubService {
         subRepository.delete(findSub(id));
     }
 
-    // ponytail: 결제 이력 테이블이 없어서 "지금 활성 + 그 달 말일 이전 시작" 구독을 그 달 지출로 봄
+    // 이번 달 지출 조회(getMonthlySummary)와 같은 기준으로 그 달 결제 내역을 만든다.
     @Override
     public byte[] exportExcel(YearMonth month) {
-        List<Sub> subs = subRepository.findByActiveTrueAndStartDateLessThanEqualOrderByBillingDay(month.atEndOfMonth());
+        MonthlySummaryResponseDto summary = getMonthlySummary(month);
 
         try (Workbook workbook = new XSSFWorkbook(); ByteArrayOutputStream out = new ByteArrayOutputStream()) {
             Sheet sheet = workbook.createSheet(month.toString());
@@ -131,21 +131,17 @@ public class SubServiceImpl implements SubService {
             header.createCell(1).setCellValue("결제일");
             header.createCell(2).setCellValue("금액");
 
-            BigDecimal total = BigDecimal.ZERO;
             int rowIndex = 1;
-            for (Sub sub : subs) {
-                // 31일 결제인데 그 달이 30일까지면 말일에 결제
-                int day = Math.min(sub.getBillingDay(), month.lengthOfMonth());
+            for (MonthlyBillingDto billing : summary.getSubs()) {
                 Row row = sheet.createRow(rowIndex++);
-                row.createCell(0).setCellValue(sub.getServiceName());
-                row.createCell(1).setCellValue(month.atDay(day).toString());
-                row.createCell(2).setCellValue(sub.getMonthlyPrice().doubleValue());
-                total = total.add(sub.getMonthlyPrice());
+                row.createCell(0).setCellValue(billing.getServiceName());
+                row.createCell(1).setCellValue(billing.getBillingDate().toString());
+                row.createCell(2).setCellValue(billing.getMonthlyPrice().doubleValue());
             }
 
             Row sum = sheet.createRow(rowIndex);
             sum.createCell(0).setCellValue("합계");
-            sum.createCell(2).setCellValue(total.doubleValue());
+            sum.createCell(2).setCellValue(summary.getTotalAmount().doubleValue());
 
             workbook.write(out);
             return out.toByteArray();
