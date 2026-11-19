@@ -15,4 +15,6 @@ public interface SubRepository extends JpaRepository<Sub, Long> {
               and s.billingDay between :day and :lastBillingDay
             """)
     List<Sub> findDueSubs(LocalDate today, int day, int lastBillingDay);
+
+    List<Sub> findByActiveTrueAndStartDateLessThanEqualOrderByBillingDay(LocalDate date);
 }
