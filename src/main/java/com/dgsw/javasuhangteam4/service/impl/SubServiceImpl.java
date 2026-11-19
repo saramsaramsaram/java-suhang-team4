@@ -1,11 +1,15 @@
 package com.dgsw.javasuhangteam4.service.impl;
 
 import com.dgsw.javasuhangteam4.dto.request.SubUpdateRequest;
+import com.dgsw.javasuhangteam4.dto.response.SubDetailResponseDto;
 import com.dgsw.javasuhangteam4.dto.response.SubResponseDto;
 import com.dgsw.javasuhangteam4.enitity.Sub;
 import com.dgsw.javasuhangteam4.exception.SubNotFoundException;
 import com.dgsw.javasuhangteam4.repository.SubRepository;
+import com.dgsw.javasuhangteam4.service.BillingCalculator;
 import com.dgsw.javasuhangteam4.service.SubService;
+import java.time.Clock;
+import java.time.LocalDate;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -17,6 +21,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class SubServiceImpl implements SubService {
 
     private final SubRepository subRepository;
+    private final Clock clock;
 
     @Override
     public List<SubResponseDto> getSubs() {
@@ -26,8 +31,11 @@ public class SubServiceImpl implements SubService {
     }
 
     @Override
-    public SubResponseDto getSub(Long id) {
-        return SubResponseDto.from(findSub(id));
+    public SubDetailResponseDto getSub(Long id) {
+        Sub sub = findSub(id);
+        int paymentCount = BillingCalculator.countPayments(
+                sub.getStartDate(), sub.getBillingDay(), LocalDate.now(clock));
+        return SubDetailResponseDto.of(sub, paymentCount);
     }
 
     @Override

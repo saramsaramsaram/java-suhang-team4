@@ -1,6 +1,7 @@
 package com.dgsw.javasuhangteam4.controller.subscribe;
 
 import com.dgsw.javasuhangteam4.dto.request.SubUpdateRequest;
+import com.dgsw.javasuhangteam4.dto.response.SubDetailResponseDto;
 import com.dgsw.javasuhangteam4.dto.response.SubResponseDto;
 import com.dgsw.javasuhangteam4.service.SubService;
 import jakarta.validation.Valid;
@@ -27,7 +28,7 @@ public class SubscribeController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<SubResponseDto> getSub(@PathVariable Long id) {
+    public ResponseEntity<SubDetailResponseDto> getSub(@PathVariable Long id) {
         return ResponseEntity.ok(subService.getSub(id));
     }
 
