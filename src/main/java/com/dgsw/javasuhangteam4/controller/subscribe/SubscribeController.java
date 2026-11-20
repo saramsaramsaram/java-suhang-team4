@@ -1,17 +1,22 @@
 package com.dgsw.javasuhangteam4.controller.subscribe;
 
 import com.dgsw.javasuhangteam4.dto.request.SubUpdateRequest;
+import com.dgsw.javasuhangteam4.dto.response.MonthlySummaryResponseDto;
+import com.dgsw.javasuhangteam4.dto.response.SubDetailResponseDto;
 import com.dgsw.javasuhangteam4.dto.response.SubResponseDto;
 import com.dgsw.javasuhangteam4.service.SubService;
 import jakarta.validation.Valid;
+import java.time.YearMonth;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
@@ -26,8 +31,14 @@ public class SubscribeController {
         return ResponseEntity.ok(subService.getSubs());
     }
 
+    @GetMapping("/summary")
+    public ResponseEntity<MonthlySummaryResponseDto> getMonthlySummary(
+            @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM") YearMonth month) {
+        return ResponseEntity.ok(subService.getMonthlySummary(month));
+    }
+
     @GetMapping("/{id}")
-    public ResponseEntity<SubResponseDto> getSub(@PathVariable Long id) {
+    public ResponseEntity<SubDetailResponseDto> getSub(@PathVariable Long id) {
         return ResponseEntity.ok(subService.getSub(id));
     }
 
