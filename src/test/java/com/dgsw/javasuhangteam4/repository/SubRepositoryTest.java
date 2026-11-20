@@ -11,8 +11,11 @@ import java.util.List;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.data.jpa.test.autoconfigure.DataJpaTest;
+import org.springframework.test.context.TestPropertySource;
 
 @DataJpaTest
+// data.sql 더미 데이터 없이 테스트에서 넣은 구독만으로 쿼리를 검증한다.
+@TestPropertySource(properties = "spring.sql.init.mode=never")
 class SubRepositoryTest {
 
     @Autowired
