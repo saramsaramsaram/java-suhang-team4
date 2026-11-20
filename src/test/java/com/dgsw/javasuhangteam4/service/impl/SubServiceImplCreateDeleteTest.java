@@ -24,6 +24,7 @@ import java.time.YearMonth;
 import java.time.ZoneId;
 import java.util.List;
 import java.util.Optional;
+import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.junit.jupiter.api.BeforeEach;
@@ -109,6 +110,47 @@ class SubServiceImplCreateDeleteTest {
             assertThat(sheet.getRow(2).getCell(1).getStringCellValue()).isEqualTo("2026-02-28");
             assertThat(sheet.getRow(3).getCell(0).getStringCellValue()).isEqualTo("합계");
             assertThat(sheet.getRow(3).getCell(2).getNumericCellValue()).isEqualTo(28400);
+        }
+    }
+
+    @Test
+    void exportsOnlyHeaderAndZeroTotalWhenNoSubs() throws Exception {
+        given(subRepository.findActiveSubsStartedBy(LocalDate.of(2026, 2, 28))).willReturn(List.of());
+
+        byte[] file = subService.exportExcel(YearMonth.of(2026, 2));
+
+        // 그 달 말일 기준으로 조회한다
+        verify(subRepository).findActiveSubsStartedBy(LocalDate.of(2026, 2, 28));
+        try (var workbook = new XSSFWorkbook(new ByteArrayInputStream(file))) {
+            Sheet sheet = workbook.getSheet("2026-02");
+            Row header = sheet.getRow(0);
+            assertThat(header.getCell(0).getStringCellValue()).isEqualTo("서비스명");
+            assertThat(header.getCell(1).getStringCellValue()).isEqualTo("결제일");
+            assertThat(header.getCell(2).getStringCellValue()).isEqualTo("금액");
+
+            assertThat(sheet.getLastRowNum()).isEqualTo(1);
+            assertThat(sheet.getRow(1).getCell(0).getStringCellValue()).isEqualTo("합계");
+            assertThat(sheet.getRow(1).getCell(2).getNumericCellValue()).isZero();
+        }
+    }
+
+    @Test
+    void exportSkipsSubStartingAfterBillingDate() throws Exception {
+        given(subRepository.findActiveSubsStartedBy(LocalDate.of(2026, 2, 28)))
+                .willReturn(List.of(
+                        sub("유튜브 뮤직", "14900", 1, LocalDate.of(2026, 1, 1)),
+                        // 2/5 결제일보다 늦게 시작 → 2월에는 결제되지 않음
+                        sub("늦게 시작한 구독", "5000", 5, LocalDate.of(2026, 2, 10))));
+
+        byte[] file = subService.exportExcel(YearMonth.of(2026, 2));
+
+        try (var workbook = new XSSFWorkbook(new ByteArrayInputStream(file))) {
+            Sheet sheet = workbook.getSheet("2026-02");
+            assertThat(sheet.getLastRowNum()).isEqualTo(2);
+            assertThat(sheet.getRow(1).getCell(0).getStringCellValue()).isEqualTo("유튜브 뮤직");
+            assertThat(sheet.getRow(1).getCell(2).getNumericCellValue()).isEqualTo(14900);
+            assertThat(sheet.getRow(2).getCell(0).getStringCellValue()).isEqualTo("합계");
+            assertThat(sheet.getRow(2).getCell(2).getNumericCellValue()).isEqualTo(14900);
         }
     }
 
