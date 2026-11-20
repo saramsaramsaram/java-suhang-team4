@@ -12,11 +12,14 @@ import jakarta.persistence.EntityManager;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.ResultActions;
 import org.springframework.transaction.support.TransactionTemplate;
 
 @SpringBootTest(properties = "spring.datasource.url=jdbc:h2:mem:subscription-update")
@@ -39,12 +42,14 @@ class SubscribeUpdateTest {
     @Autowired
     private SubRepository subRepository;
 
+
     @Test
-    void updatesSubscriptionAndStoresChanges() throws Exception {
+    void savesUpdate() throws Exception {
         LocalDate startDate = LocalDate.of(2026, 11, 1);
-        Long subId = transactionTemplate.execute(transaction -> {
+        Long id = transactionTemplate.execute(tx -> {
             Member member = Member.builder().name("테스트 회원").email("member@example.com").build();
             entityManager.persist(member);
+
             Sub sub = Sub.builder()
                     .member(member)
                     .serviceName("유튜브 뮤직")
@@ -57,13 +62,14 @@ class SubscribeUpdateTest {
             return sub.getId();
         });
 
-        mvc.perform(put("/api/subs/{id}", subId).contentType(MediaType.APPLICATION_JSON).content(VALID_UPDATE))
+        update(id, VALID_UPDATE)
                 .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(id))
                 .andExpect(jsonPath("$.serviceName").value("유튜브 프리미엄"))
                 .andExpect(jsonPath("$.monthlyPrice").value(14900))
                 .andExpect(jsonPath("$.billingDay").value(3));
 
-        Sub saved = subRepository.findById(subId).orElseThrow();
+        Sub saved = subRepository.findById(id).orElseThrow();
         assertThat(saved.getServiceName()).isEqualTo("유튜브 프리미엄");
         assertThat(saved.getMonthlyPrice()).isEqualByComparingTo("14900");
         assertThat(saved.getBillingDay()).isEqualTo(3);
@@ -71,19 +77,35 @@ class SubscribeUpdateTest {
         assertThat(saved.isActive()).isFalse();
     }
 
-    @Test
-    void rejectsBillingDayOutsideRange() throws Exception {
-        String request = VALID_UPDATE.replace("\"billingDay\":3", "\"billingDay\":32");
-        mvc.perform(put("/api/subs/1").contentType(MediaType.APPLICATION_JSON).content(request))
+    @ParameterizedTest
+    @ValueSource(strings = {
+            "{\"serviceName\":\" \", \"monthlyPrice\":14900, \"billingDay\":3}",
+            "{\"serviceName\":\"유튜브\", \"monthlyPrice\":-100, \"billingDay\":3}",
+            "{\"serviceName\":\"유튜브\", \"monthlyPrice\":14900, \"billingDay\":32}",
+            "{\"serviceName\":\"유튜브\", \"monthlyPrice\":14900}"
+    })
+    void rejectsInvalidInput(String body) throws Exception {
+        update(1, body)
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.status").value(400))
                 .andExpect(jsonPath("$.message").value("입력값 오류"));
     }
 
     @Test
-    void returnsNotFoundForUnknownSubscriptionOnExistingRoute() throws Exception {
-        mvc.perform(put("/api/subs/99999").contentType(MediaType.APPLICATION_JSON).content(VALID_UPDATE))
+    void rejectsBrokenJson() throws Exception {
+        update(1, "{").andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void rejectsUnknownSub() throws Exception {
+        update(99999, VALID_UPDATE)
                 .andExpect(status().isNotFound())
-                .andExpect(jsonPath("$.status").value(404));
+                .andExpect(jsonPath("$.message").value("구독 없음"));
+    }
+
+
+    private ResultActions update(long id, String body) throws Exception {
+        return mvc.perform(put("/api/subs/{id}", id)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(body));
     }
 }
